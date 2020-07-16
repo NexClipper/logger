@@ -135,11 +135,11 @@ func Close() {
 	defaultLogger.Close()
 }
 
-// Level describes the level of verbosity for info messages when using
+// Level describes the level of verbosity for debug messages when using
 // V style logging. See documentation for the V function for more information.
 type Level int
 
-// Verbose is type that implements Infof, etc.
+// Verbose is type that implements Debugf, etc.
 type Verbose struct {
 	enabled bool
 	logger  *Logger
@@ -202,7 +202,7 @@ func (l *Logger) Debug(v ...interface{}) {
 }
 
 // DebugDepth acts as Debug but uses depth to determine which call frame to log.
-// DebugDepth(0, "msg") is the same as Info("msg").
+// DebugDepth(0, "msg") is the same as Debug("msg").
 func (l *Logger) DebugDepth(depth int, v ...interface{}) {
 	l.output(sDebug, depth, fmt.Sprint(v...))
 }
@@ -386,13 +386,14 @@ func (v Verbose) Infof(format string, args ...interface{}) {
 
 // SetFlags sets the output flags for the logger.
 func SetFlags(flag int) {
+	defaultLogger.debugLog.SetFlags(flag)
 	defaultLogger.infoLog.SetFlags(flag)
 	defaultLogger.warningLog.SetFlags(flag)
 	defaultLogger.errorLog.SetFlags(flag)
 	defaultLogger.fatalLog.SetFlags(flag)
 }
 
-// SetLevel sets the verbosity level for verbose info logging in the
+// SetLevel sets the verbosity level for verbose debug logging in the
 // default logger.
 func SetLevel(lvl Level) {
 	defaultLogger.SetLevel(lvl)
