@@ -28,7 +28,8 @@ type severity int
 
 // Severity levels.
 const (
-	sInfo severity = iota
+	sDebug severity = iota
+	sInfo
 	sWarning
 	sError
 	sFatal
@@ -36,6 +37,7 @@ const (
 
 // Severity tags.
 const (
+	tagDebug   = "DEBUG: "
 	tagInfo    = "INFO : "
 	tagWarning = "WARN : "
 	tagError   = "ERROR: "
@@ -55,6 +57,7 @@ var (
 // initialize resets defaultLogger.  Which allows tests to reset environment.
 func initialize() {
 	defaultLogger = &Logger{
+		debugLog:   log.New(os.Stderr, initText+tagDebug, flags),
 		infoLog:    log.New(os.Stderr, initText+tagInfo, flags),
 		warningLog: log.New(os.Stderr, initText+tagWarning, flags),
 		errorLog:   log.New(os.Stderr, initText+tagError, flags),
@@ -101,6 +104,7 @@ func Init(name string, verbose, systemLog bool, logFile io.Writer) *Logger {
 	}
 
 	l := Logger{
+		debugLog:   log.New(io.MultiWriter(iLogs...), tagDebug, flags),
 		infoLog:    log.New(io.MultiWriter(iLogs...), tagInfo, flags),
 		warningLog: log.New(io.MultiWriter(wLogs...), tagWarning, flags),
 		errorLog:   log.New(io.MultiWriter(eLogs...), tagError, flags),
@@ -144,6 +148,7 @@ type Verbose struct {
 // A Logger represents an active logging object. Multiple loggers can be used
 // simultaneously even if they are using the same same writers.
 type Logger struct {
+	debugLog    *log.Logger
 	infoLog     *log.Logger
 	warningLog  *log.Logger
 	errorLog    *log.Logger
@@ -157,6 +162,8 @@ func (l *Logger) output(s severity, depth int, txt string) {
 	logLock.Lock()
 	defer logLock.Unlock()
 	switch s {
+	case sDebug:
+		l.debugLog.Output(3+depth, txt)
 	case sInfo:
 		l.infoLog.Output(3+depth, txt)
 	case sWarning:
@@ -186,6 +193,30 @@ func (l *Logger) Close() {
 			fmt.Fprintf(os.Stderr, "Failed to close log %v: %v\n", c, err)
 		}
 	}
+}
+
+// Debug logs with the Debug severity.
+// Arguments are handled in the manner of fmt.Print.
+func (l *Logger) Debug(v ...interface{}) {
+	l.output(sDebug, 0, fmt.Sprint(v...))
+}
+
+// DebugDepth acts as Debug but uses depth to determine which call frame to log.
+// DebugDepth(0, "msg") is the same as Info("msg").
+func (l *Logger) DebugDepth(depth int, v ...interface{}) {
+	l.output(sDebug, depth, fmt.Sprint(v...))
+}
+
+// Debugln logs with the Debug severity.
+// Arguments are handled in the manner of fmt.Println.
+func (l *Logger) Debugln(v ...interface{}) {
+	l.output(sDebug, 0, fmt.Sprintln(v...))
+}
+
+// Debugf logs with the Debug severity.
+// Arguments are handled in the manner of fmt.Printf.
+func (l *Logger) Debugf(format string, v ...interface{}) {
+	l.output(sDebug, 0, fmt.Sprintf(format, v...))
 }
 
 // Info logs with the Info severity.
@@ -292,10 +323,10 @@ func (l *Logger) Fatalf(format string, v ...interface{}) {
 	os.Exit(1)
 }
 
-// SetLevel sets the logger verbosity level for verbose info logging.
+// SetLevel sets the logger verbosity level for verbose debug logging.
 func (l *Logger) SetLevel(lvl Level) {
 	l.level = lvl
-	l.output(sInfo, 0, fmt.Sprintf("Info verbosity set to %d", lvl))
+	l.output(sDebug, 0, fmt.Sprintf("Debug verbosity set to %d", lvl))
 }
 
 // V generates a log record depends on the setting of the Level; or none default.
@@ -304,6 +335,29 @@ func (l *Logger) V(lvl Level) Verbose {
 	return Verbose{
 		enabled: l.level >= lvl,
 		logger:  l,
+	}
+}
+
+// Debug is equivalent to the global Debug function, guarded by the value of v.
+func (v Verbose) Debug(args ...interface{}) {
+	if v.enabled {
+		v.logger.output(sDebug, 0, fmt.Sprint(args...))
+	}
+}
+
+// Debugln is equivalent to the global Debugln function, guarded by the value of v.
+// See the documentation of V for usage.
+func (v Verbose) Debugln(args ...interface{}) {
+	if v.enabled {
+		v.logger.output(sDebug, 0, fmt.Sprintln(args...))
+	}
+}
+
+// Debugf is equivalent to the global Debugf function, guarded by the value of v.
+// See the documentation of V for usage.
+func (v Verbose) Debugf(format string, args ...interface{}) {
+	if v.enabled {
+		v.logger.output(sDebug, 0, fmt.Sprintf(format, args...))
 	}
 }
 
@@ -348,6 +402,30 @@ func SetLevel(lvl Level) {
 // by default using the default logger.
 func V(lvl Level) Verbose {
 	return defaultLogger.V(lvl)
+}
+
+// Debug uses the default logger and logs with the Debug severity.
+// Arguments are handled in the manner of fmt.Print.
+func Debug(v ...interface{}) {
+	defaultLogger.output(sDebug, 0, fmt.Sprint(v...))
+}
+
+// DebugDepth acts as Debug but uses depth to determine which call frame to log.
+// DebugDepth(0, "msg") is the same as Debug("msg").
+func DebugDepth(depth int, v ...interface{}) {
+	defaultLogger.output(sDebug, depth, fmt.Sprint(v...))
+}
+
+// Debugln uses the default logger and logs with the Debug severity.
+// Arguments are handled in the manner of fmt.Println.
+func Debugln(v ...interface{}) {
+	defaultLogger.output(sDebug, 0, fmt.Sprintln(v...))
+}
+
+// Debugf uses the default logger and logs with the Debug severity.
+// Arguments are handled in the manner of fmt.Printf.
+func Debugf(format string, v ...interface{}) {
+	defaultLogger.output(sDebug, 0, fmt.Sprintf(format, v...))
 }
 
 // Info uses the default logger and logs with the Info severity.
