@@ -1,4 +1,4 @@
-module github.com/google/logger
+module github.com/NexClipper/logger
 
 go 1.12
 
