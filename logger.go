@@ -412,7 +412,7 @@ func V(lvl Level) Verbose {
 
 //GetLevel get current log level
 func GetLevel() Level {
-	return defaultLogger.getLevel()
+	return defaultLogger.GetLevel()
 }
 
 // Debug uses the default logger and logs with the Debug severity.
