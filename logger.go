@@ -195,7 +195,8 @@ func (l *Logger) Close() {
 	}
 }
 
-func (l *Logger) getLevel() Level {
+// GetLevel get current log level
+func (l *Logger) GetLevel() Level {
 	return l.level
 }
 
@@ -409,7 +410,8 @@ func V(lvl Level) Verbose {
 	return defaultLogger.V(lvl)
 }
 
-func getLevel() Level {
+//GetLevel get current log level
+func GetLevel() Level {
 	return defaultLogger.getLevel()
 }
 
