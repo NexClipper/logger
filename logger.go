@@ -195,6 +195,10 @@ func (l *Logger) Close() {
 	}
 }
 
+func (l *Logger) getLevel() Level {
+	return l.level
+}
+
 // Debug logs with the Debug severity.
 // Arguments are handled in the manner of fmt.Print.
 func (l *Logger) Debug(v ...interface{}) {
@@ -403,6 +407,10 @@ func SetLevel(lvl Level) {
 // by default using the default logger.
 func V(lvl Level) Verbose {
 	return defaultLogger.V(lvl)
+}
+
+func getLevel() Level {
+	return defaultLogger.getLevel()
 }
 
 // Debug uses the default logger and logs with the Debug severity.
