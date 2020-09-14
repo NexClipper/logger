@@ -161,19 +161,22 @@ type Logger struct {
 func (l *Logger) output(s severity, depth int, txt string) {
 	logLock.Lock()
 	defer logLock.Unlock()
-	switch s {
-	case sDebug:
-		l.debugLog.Output(3+depth, txt)
-	case sInfo:
-		l.infoLog.Output(3+depth, txt)
-	case sWarning:
-		l.warningLog.Output(3+depth, txt)
-	case sError:
-		l.errorLog.Output(3+depth, txt)
-	case sFatal:
-		l.fatalLog.Output(3+depth, txt)
-	default:
-		panic(fmt.Sprintln("unrecognized severity:", s))
+
+	if l.level <= Level(s) {
+		switch s {
+		case sDebug:
+			l.debugLog.Output(3+depth, txt)
+		case sInfo:
+			l.infoLog.Output(3+depth, txt)
+		case sWarning:
+			l.warningLog.Output(3+depth, txt)
+		case sError:
+			l.errorLog.Output(3+depth, txt)
+		case sFatal:
+			l.fatalLog.Output(3+depth, txt)
+		default:
+			panic(fmt.Sprintln("unrecognized severity:", s))
+		}
 	}
 }
 
